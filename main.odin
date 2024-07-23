@@ -2,9 +2,11 @@ package main
 
 import rl "vendor:raylib"
 
+import pl "./player"
+
 // Global variables
-screenWidth  :: 800
-screenHeight :: 450
+screenWidth  :: 1800
+screenHeight :: 900
 MAX_BUILDINGS :: 100
 
 
@@ -19,7 +21,11 @@ main :: proc()
 
     rl.InitWindow(screenWidth, screenHeight, "raylib [core] example - 2d camera")
 
-    player := rl.Rectangle{ 400, 280, 40, 40 }
+    player := pl.BuildPlayer()
+    // player.transform.position = rl.Vector2{ 400, 280 }
+    // player.rectangle = rl.Rectangle{ 400, 280, 40, 40 }
+
+    //player := rl.Rectangle{ 400, 280, 40, 40 }
     // player.x = 400
     // player.y = 280
     // player.width = 40
@@ -41,7 +47,7 @@ main :: proc()
     }
 
     camera := rl.Camera2D{}
-    camera.target = { player.x + 20.0, player.y + 20.0 }
+    camera.target = { player.transform.position.x + 20.0, player.transform.position.y + 20.0 }
     camera.offset = { screenWidth/2.0, screenHeight/2.0 }
     camera.rotation = 0.0
     camera.zoom = 1.0
@@ -52,17 +58,10 @@ main :: proc()
     // Main game loop
     for !rl.WindowShouldClose()        // Detect window close button or ESC key
     {
-        // Update
-        //----------------------------------------------------------------------------------
-        // Player movement
-        if (rl.IsKeyDown(rl.KeyboardKey.RIGHT)) {
-            player.x += 2
-        }
-        else if (rl.IsKeyDown(rl.KeyboardKey.LEFT)) {
-            player.x -= 2
-        }
+        pl.Update(player)
+        rl.TraceLog(rl.TraceLogLevel.INFO, "Player position: %f, %f\n", player.transform.position.x, player.transform.position.y)
         // Camera target follows player
-        camera.target = { player.x + 20, player.y + 20 }
+        camera.target = { player.transform.position.x + 20, player.transform.position.y + 20 }
 
         // Camera rotation controls
         if rl.IsKeyDown(rl.KeyboardKey.A) {
@@ -109,7 +108,8 @@ main :: proc()
                 for i in 0..<MAX_BUILDINGS{
                     rl.DrawRectangleRec(buildings[i], buildColors[i])
                 }
-                rl.DrawRectangleRec(player, rl.RED)
+                
+                pl.Draw(player)  
 
                 rl.DrawLine(i32(camera.target.x), -screenHeight*10, i32(camera.target.x), screenHeight*10, rl.GREEN)
                 rl.DrawLine(-screenWidth*10, i32(camera.target.y), screenWidth*10, i32(camera.target.y), rl.GREEN)
