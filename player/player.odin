@@ -2,6 +2,7 @@ package player
 
 import rl "vendor:raylib"
 
+PROJECTILE_SPEED : f32 = 100
 Projectile :: struct{
     transform : Transform,
     size : f32,
@@ -11,27 +12,70 @@ Projectile :: struct{
     speed : f32,
 }
 
-PROJECTILE_SPEED : f32 = 100
+Weapon :: struct {
+    transform_offset : Transform,
+    transform : Transform,
+    sprite : ^Sprite,
+    projectiles : [dynamic]^Projectile,
+}
 
 Transform :: struct {
     position: rl.Vector2,
     rotation: rl.Quaternion,
 }
 
-Player :: struct {
+Sprite :: struct {
+    height : f32,
+    width : f32,
+    transform_offset : Transform,
     transform : Transform,
+    texture : rl.Texture2D,
     rectangle : rl.Rectangle,
-    projectiles : [dynamic]^Projectile,
     color : rl.Color,
 }
 
-BuildPlayer :: proc() -> ^Player {
+Player :: struct {
+    transform : Transform,
+    sprite : ^Sprite,
+    weapon : ^Weapon,
+}
+
+make_sprite :: proc(height : f32 = 40, width :f32 = 40, transform_offset : rl.Vector2 = rl.Vector2{ 0, 0 }, color : rl.Color = rl.RED) -> ^Sprite {
+    s := new(Sprite)
+    s.height = height
+    s.width = width
+    s.transform_offset.position = transform_offset
+    s.color = color
+    s.rectangle = rl.Rectangle{ 0, 0, s.width, s.height }
+    return s
+}
+
+make_weapon :: proc() -> ^Weapon {
+    w := new(Weapon)
+    w.transform_offset.position = rl.Vector2{ 40, 20 }
+    w.sprite = make_sprite(5, 10, rl.Vector2{ 0, 0 }, rl.BLUE)
+    w.projectiles = make([dynamic]^Projectile, 0,20)
+    return w
+}
+
+Make_Player :: proc() -> ^Player {
     p := new(Player)
     p.transform.position = rl.Vector2{ 400, 280 }
-    p.rectangle = rl.Rectangle{ 400, 280, 40, 40 }
-    p.color = rl.RED
-    projectiles := make([dynamic]^Projectile, 0,20)
+    p.sprite = make_sprite()
+    p.weapon = make_weapon()
     return p
+}
+
+
+update_sprite :: proc(entity: $T) {
+    entity.sprite.transform.position = entity.sprite.transform_offset.position + entity.transform.position
+    entity.sprite.rectangle.height = entity.sprite.height
+    entity.sprite.rectangle.width = entity.sprite.width
+}
+
+update_weapon :: proc(p: ^Player) {
+    p.weapon.transform.position = p.weapon.transform_offset.position + p.transform.position
+    update_sprite(p.weapon)
 }
 
 Update :: proc(p: ^Player) {
@@ -39,16 +83,24 @@ Update :: proc(p: ^Player) {
     //----------------------------------------------------------------------------------
     // Player movement
     move(p)
+    update_sprite(p)
+    update_weapon(p)
     
-    p.rectangle.x = p.transform.position.x
-    p.rectangle.y = p.transform.position.y
+}
+
+draw_sprite :: proc(s: $T) {
+    // Draw
+    //----------------------------------------------------------------------------------
+    s.rectangle = rl.Rectangle{ s.transform.position.x, s.transform.position.y, s.width, s.height }
+    rl.DrawRectangleRec(s.rectangle, s.color)
 }
 
 Draw :: proc(p: ^Player) {
     // Draw
     //----------------------------------------------------------------------------------
-    rl.DrawRectangleRec(p.rectangle, p.color)
-    for i in p.projectiles {
+    draw_sprite(p.sprite)
+    draw_sprite(p.weapon.sprite)
+    for i in p.weapon.projectiles {
         if i.active {
             rl.DrawCircle(i32(i.transform.position.x), i32(i.transform.position.y), i.size, i.color)
         }
@@ -75,11 +127,11 @@ move :: proc(p: ^Player) {
     }
     peojectile_timer += rl.GetFrameTime()
     if peojectile_timer > 1/PROJECTILE_SPEED{  
-        for i in 0..<len(p.projectiles) {
+        for i in p.weapon.projectiles {
             
-            if p.projectiles[i].active{
-                p.projectiles[i].transform.position.x += p.projectiles[i].direction.x * p.projectiles[i].speed
-                p.projectiles[i].transform.position.y += p.projectiles[i].direction.y * p.projectiles[i].speed
+            if i.active{
+                i.transform.position.x += i.direction.x * i.speed
+                i.transform.position.y += i.direction.y * i.speed
                 peojectile_timer = 0
             }
         }
@@ -88,11 +140,11 @@ move :: proc(p: ^Player) {
 
 shoot :: proc(p: ^Player) {
     projectile := new(Projectile)
-    projectile.transform.position = rl.Vector2{ p.transform.position.x, p.transform.position.y }
+    projectile.transform.position = p.weapon.transform.position
     projectile.size = 5
     projectile.color = rl.BLUE
     projectile.speed = 10
     projectile.active = true
     projectile.direction = rl.Vector2{ 1, 0 }
-    append(&p.projectiles, projectile)
+    append(&p.weapon.projectiles, projectile)
 }

@@ -21,7 +21,7 @@ main :: proc()
 
     rl.InitWindow(screenWidth, screenHeight, "raylib [core] example - 2d camera")
 
-    player := pl.BuildPlayer()
+    player := pl.Make_Player()
     // player.transform.position = rl.Vector2{ 400, 280 }
     // player.rectangle = rl.Rectangle{ 400, 280, 40, 40 }
 
