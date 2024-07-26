@@ -12,11 +12,27 @@ Projectile :: struct{
     speed : f32,
 }
 
+AMMO_TYPE :: enum {
+    BULLET,
+    LASER,
+    ROCKET,
+    SHOTGUN,
+    GRENADE,
+}
+
 Weapon :: struct {
     transform_offset : Transform,
     transform : Transform,
     sprite : ^Sprite,
     projectiles : [dynamic]^Projectile,
+
+    range : f32,
+    fire_rate : f32,
+    damage : f32,
+
+    ammo_type : AMMO_TYPE,
+    ammo : i32,
+    max_ammo : i32,
 }
 
 Transform :: struct {
@@ -103,7 +119,7 @@ Draw :: proc(p: ^Player) {
     draw_sprite(p.weapon.sprite)
     mouse_position := rl.GetScreenToWorld2D(rl.GetMousePosition(), p.camera^)
 
-    rl.DrawLineV(mouse_position, p.transform.position, rl.RED);
+    rl.DrawLineV(mouse_position, p.weapon.transform.position, rl.RED);
     for i in p.weapon.projectiles {
         if i.active {
             rl.DrawCircle(i32(i.transform.position.x), i32(i.transform.position.y), i.size, i.color)
@@ -149,7 +165,6 @@ shoot :: proc(p: ^Player) {
     projectile.speed = 10
     projectile.active = true
     mouse_position := rl.GetScreenToWorld2D(rl.GetMousePosition(), p.camera^)
-    player_position := p.transform.position
-    projectile.direction = rl.Vector2Normalize(mouse_position - player_position)
+    projectile.direction = rl.Vector2Normalize(mouse_position - p.weapon.transform.position)
     append(&p.weapon.projectiles, projectile)
 }
