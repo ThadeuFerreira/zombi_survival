@@ -37,7 +37,8 @@ Weapon :: struct {
 
 Transform :: struct {
     position: rl.Vector2,
-    rotation: rl.Quaternion,
+    direction: rl.Vector2,
+    rotation: f32,
 }
 
 Sprite :: struct {
@@ -130,6 +131,9 @@ Draw :: proc(p: ^Player) {
 
 projectile_timer : f32 = 0
 move :: proc(p: ^Player) {
+    mouse_position := rl.GetScreenToWorld2D(rl.GetMousePosition(), p.camera^)
+    direction := rl.Vector2Normalize(mouse_position - p.weapon.transform.position)
+    p.transform.direction = direction
     if (rl.IsKeyDown(rl.KeyboardKey.RIGHT) || rl.IsKeyDown(rl.KeyboardKey.D)) {
         p.transform.position.x += 20
     }
@@ -164,7 +168,6 @@ shoot :: proc(p: ^Player) {
     projectile.color = rl.BLUE
     projectile.speed = 10
     projectile.active = true
-    mouse_position := rl.GetScreenToWorld2D(rl.GetMousePosition(), p.camera^)
-    projectile.direction = rl.Vector2Normalize(mouse_position - p.weapon.transform.position)
+    projectile.direction = p.transform.direction
     append(&p.weapon.projectiles, projectile)
 }
