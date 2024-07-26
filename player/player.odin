@@ -101,12 +101,7 @@ Draw :: proc(p: ^Player) {
     //----------------------------------------------------------------------------------
     draw_sprite(p.sprite)
     draw_sprite(p.weapon.sprite)
-    c := rl.Camera2D{}
-    c.target = p.camera.target
-    c.offset = p.camera.offset
-    c.rotation = p.camera.rotation
-    c.zoom = p.camera.zoom
-    mouse_position := rl.GetScreenToWorld2D(rl.GetMousePosition(), c)
+    mouse_position := rl.GetScreenToWorld2D(rl.GetMousePosition(), p.camera^)
 
     rl.DrawLineV(mouse_position, p.transform.position, rl.RED);
     for i in p.weapon.projectiles {
@@ -131,13 +126,12 @@ move :: proc(p: ^Player) {
     else if (rl.IsKeyDown(rl.KeyboardKey.DOWN) || rl.IsKeyDown(rl.KeyboardKey.S)) {
         p.transform.position.y += 20
     }
-    else if (rl.IsKeyDown(rl.KeyboardKey.SPACE)) {
+    else if (rl.IsKeyDown(rl.KeyboardKey.SPACE) || rl.IsMouseButtonDown(rl.MouseButton.LEFT)) {
         shoot(p)
     }
     projectile_timer += rl.GetFrameTime()
     if projectile_timer > 1/PROJECTILE_SPEED{  
-        for i in p.weapon.projectiles {
-            
+        for i in p.weapon.projectiles {      
             if i.active{
                 i.transform.position.x += i.direction.x * i.speed
                 i.transform.position.y += i.direction.y * i.speed
@@ -154,12 +148,7 @@ shoot :: proc(p: ^Player) {
     projectile.color = rl.BLUE
     projectile.speed = 10
     projectile.active = true
-    c := rl.Camera2D{}
-    c.target = p.camera.target
-    c.offset = p.camera.offset
-    c.rotation = p.camera.rotation
-    c.zoom = p.camera.zoom
-    mouse_position := rl.GetScreenToWorld2D(rl.GetMousePosition(), c)
+    mouse_position := rl.GetScreenToWorld2D(rl.GetMousePosition(), p.camera^)
     player_position := p.transform.position
     projectile.direction = rl.Vector2Normalize(mouse_position - player_position)
     append(&p.weapon.projectiles, projectile)
