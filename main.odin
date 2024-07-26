@@ -51,6 +51,7 @@ main :: proc()
     camera.offset = { screenWidth/2.0, screenHeight/2.0 }
     camera.rotation = 0.0
     camera.zoom = 1.0
+    player.camera = &camera
 
     rl.SetTargetFPS(60)                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -64,10 +65,10 @@ main :: proc()
         camera.target = { player.transform.position.x + 20, player.transform.position.y + 20 }
 
         // Camera rotation controls
-        if rl.IsKeyDown(rl.KeyboardKey.A) {
+        if rl.IsKeyDown(rl.KeyboardKey.Q) {
             camera.rotation -= 1
         }
-        else if (rl.IsKeyDown(rl.KeyboardKey.S)) {
+        else if (rl.IsKeyDown(rl.KeyboardKey.E)) {
             camera.rotation += 1
         }
 

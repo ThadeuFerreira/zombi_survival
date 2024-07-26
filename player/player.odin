@@ -38,6 +38,7 @@ Player :: struct {
     transform : Transform,
     sprite : ^Sprite,
     weapon : ^Weapon,
+    camera : ^rl.Camera2D,
 }
 
 make_sprite :: proc(height : f32 = 40, width :f32 = 40, transform_offset : rl.Vector2 = rl.Vector2{ 0, 0 }, color : rl.Color = rl.RED) -> ^Sprite {
@@ -100,6 +101,14 @@ Draw :: proc(p: ^Player) {
     //----------------------------------------------------------------------------------
     draw_sprite(p.sprite)
     draw_sprite(p.weapon.sprite)
+    c := rl.Camera2D{}
+    c.target = p.camera.target
+    c.offset = p.camera.offset
+    c.rotation = p.camera.rotation
+    c.zoom = p.camera.zoom
+    mouse_position := rl.GetScreenToWorld2D(rl.GetMousePosition(), c)
+
+    rl.DrawLineV(mouse_position, p.transform.position, rl.RED);
     for i in p.weapon.projectiles {
         if i.active {
             rl.DrawCircle(i32(i.transform.position.x), i32(i.transform.position.y), i.size, i.color)
@@ -108,31 +117,31 @@ Draw :: proc(p: ^Player) {
 
 }
 
-peojectile_timer : f32 = 0
+projectile_timer : f32 = 0
 move :: proc(p: ^Player) {
-    if (rl.IsKeyDown(rl.KeyboardKey.RIGHT)) {
+    if (rl.IsKeyDown(rl.KeyboardKey.RIGHT) || rl.IsKeyDown(rl.KeyboardKey.D)) {
         p.transform.position.x += 20
     }
-    else if (rl.IsKeyDown(rl.KeyboardKey.LEFT)) {
+    else if (rl.IsKeyDown(rl.KeyboardKey.LEFT) || rl.IsKeyDown(rl.KeyboardKey.A)) {
         p.transform.position.x -= 20
     }
-    else if (rl.IsKeyDown(rl.KeyboardKey.UP)) {
+    else if (rl.IsKeyDown(rl.KeyboardKey.UP) || rl.IsKeyDown(rl.KeyboardKey.W)) {
         p.transform.position.y -= 20
     }
-    else if (rl.IsKeyDown(rl.KeyboardKey.DOWN)) {
+    else if (rl.IsKeyDown(rl.KeyboardKey.DOWN) || rl.IsKeyDown(rl.KeyboardKey.S)) {
         p.transform.position.y += 20
     }
     else if (rl.IsKeyDown(rl.KeyboardKey.SPACE)) {
         shoot(p)
     }
-    peojectile_timer += rl.GetFrameTime()
-    if peojectile_timer > 1/PROJECTILE_SPEED{  
+    projectile_timer += rl.GetFrameTime()
+    if projectile_timer > 1/PROJECTILE_SPEED{  
         for i in p.weapon.projectiles {
             
             if i.active{
                 i.transform.position.x += i.direction.x * i.speed
                 i.transform.position.y += i.direction.y * i.speed
-                peojectile_timer = 0
+                projectile_timer = 0
             }
         }
     }
@@ -145,6 +154,13 @@ shoot :: proc(p: ^Player) {
     projectile.color = rl.BLUE
     projectile.speed = 10
     projectile.active = true
-    projectile.direction = rl.Vector2{ 1, 0 }
+    c := rl.Camera2D{}
+    c.target = p.camera.target
+    c.offset = p.camera.offset
+    c.rotation = p.camera.rotation
+    c.zoom = p.camera.zoom
+    mouse_position := rl.GetScreenToWorld2D(rl.GetMousePosition(), c)
+    player_position := p.transform.position
+    projectile.direction = rl.Vector2Normalize(mouse_position - player_position)
     append(&p.weapon.projectiles, projectile)
 }
